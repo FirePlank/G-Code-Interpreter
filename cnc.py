@@ -123,7 +123,7 @@ class Parser:
                     self.parse_move_command()
                     continue
                 
-                case 'KEYWORD' | 'LINE_NUMBER' | 'PROGRAM_NUMBER':
+                case 'KEYWORD' | 'PROGRAM_NUMBER':
                     self.eat(self.current_token.type)
                 
                 case default:
