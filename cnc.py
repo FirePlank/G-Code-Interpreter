@@ -149,7 +149,7 @@ class Parser:
             self.client.move_y(y)
         elif x is not None and y is None and z is None:
             self.client.move_x(x)
-        else:
+        elif x is not None or y is not None or z is not None:
             self.client.move(x, y, z)
 
     def parse_coordinate(self):
