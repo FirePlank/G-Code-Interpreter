@@ -2,10 +2,12 @@ from MachineClient import MachineClient
 import re
 import sys
 
+
 class Token:
     def __init__(self, type, value):
         self.type = type
         self.value = value
+
 
 class Tokenizer:
     def __init__(self, text):
@@ -17,7 +19,7 @@ class Tokenizer:
             return Token(None, None)
 
         c = self.text[self.pos]
-        
+
         if self.pos == 0:
             return self.get_program_number()
         elif c.isspace():
@@ -52,41 +54,44 @@ class Tokenizer:
 
     def get_token(self, code):
         # get letters until next space
-        start = self.pos+1
+        start = self.pos + 1
         self.pos += 1
-        while self.pos < len(self.text) and self.text[self.pos] != ' ' and self.text[self.pos] != '\n':
+        while self.pos < len(
+                self.text) and self.text[self.pos] != ' ' and self.text[self.pos] != '\n':
             self.pos += 1
 
         return Token(code, self.text[start:self.pos])
-    
+
     def get_coordinates(self):
         # get letters until next space
         start = self.pos
         self.pos += 1
-        while self.pos < len(self.text) and self.text[self.pos] != ' ' and self.text[self.pos] != '\n':
+        while self.pos < len(
+                self.text) and self.text[self.pos] != ' ' and self.text[self.pos] != '\n':
             self.pos += 1
 
         return Token('COORDINATE', self.text[start:self.pos])
-    
+
     def get_program_number(self):
-        start = self.pos+1
+        start = self.pos + 1
         self.pos += 1
         while self.pos < len(self.text) and self.text[self.pos].isdigit():
             self.pos += 1
-        
+
         if self.pos == start:
             raise Exception("Syntax error: Program number expected.")
 
         print("Program number: " + self.text[start:self.pos])
 
         return Token('PROGRAM_NUMBER', int(self.text[start:self.pos]))
-    
+
     def get_keyword(self):
         start = self.pos
         while self.pos < len(self.text) and self.text[self.pos].isalpha():
             self.pos += 1
 
         return Token('KEYWORD', self.text[start:self.pos])
+
 
 class Parser:
     def __init__(self, tokenizer):
@@ -95,7 +100,7 @@ class Parser:
         self.client = MachineClient()
 
     def parse(self):
-        while self.current_token.type != None:
+        while self.current_token.type is not None:
             match self.current_token.type:
                 case 'GCODE':
                     print("Gcode: " + self.current_token.value)
@@ -112,34 +117,37 @@ class Parser:
 
                 case 'SPINDLE_SPEED':
                     self.client.set_spindle_speed(self.current_token.value)
-                
+
                 case 'FEED_RATE':
                     self.client.set_feed_rate(self.current_token.value)
-                                            
+
                 case 'TOOL_NUMBER':
                     self.client.change_tool(self.current_token.value)
-                
+
                 case 'COORDINATE':
                     self.parse_move_command()
                     continue
-                
+
                 case 'KEYWORD' | 'PROGRAM_NUMBER':
-                    self.eat(self.current_token.type)
-                
+                    pass
+
                 case default:
-                    self.error("Unknown token: {}".format(self.current_token.value))
-                
+                    self.error(
+                        "Unknown token: {}".format(
+                            self.current_token.value))
+
             self.eat(self.current_token.type)
-        
+
     def parse_move_command(self):
         # linear movement
         x, y, z = self.parse_coordinate()
-        # if 2 axes are None but 1 is not, move in that axis through functions move_x, move_y, move_z
-        if x == None and y == None and z != None:
+        # if 2 axes are None but 1 is not, move in that axis through functions
+        # move_x, move_y, move_z
+        if x is None and y is None and z is not None:
             self.client.move_z(z)
-        elif x == None and y != None and z == None:
+        elif x is None and y is not None and z is None:
             self.client.move_y(y)
-        elif x != None and y == None and z == None:
+        elif x is not None and y is None and z is None:
             self.client.move_x(x)
         else:
             self.client.move(x, y, z)
@@ -153,20 +161,21 @@ class Parser:
                 y = self.current_token.value[1:]
             elif self.current_token.value[0] == 'Z':
                 z = self.current_token.value[1:]
-            
+
             self.eat('COORDINATE')
 
         return x, y, z
-    
+
     def eat(self, token_type):
         """ Compare the current token type with the passed token """
         if self.current_token.type == token_type:
             self.current_token = self.tokenizer.get_next_token()
         else:
             self.error("Expected token of type {}.".format(token_type))
-    
+
     def error(self, message=""):
         raise Exception("An Error occured while parsing: {}".format(message))
+
 
 class Interpreter:
     def __init__(self, filename):
@@ -176,8 +185,14 @@ class Interpreter:
         with open(self.filename, 'r') as f:
             text = f.read()
 
-        # set text to start at % and end at %
-        text = text[text.find('%')+2:text.rfind('%')-1]
+        # set text to start at % and end at %, if not found, use whole file
+        start = text.find('%')
+        end = text.rfind('%')
+        if start != -1 and end != -1:
+            text = text[start + 2:end - 1]
+        else:
+            print("Warning: No program start/end found. Using whole file.")
+
         # regex to remove all comments and the new lines that follow
         text = re.sub(r'\(.*?\)\s*', '', text)
         # regex to remove optional line numbers at start of line (e.g. N10)
@@ -188,8 +203,8 @@ class Interpreter:
         parser = Parser(tokenizer)
         # start parsing
         parser.parse()
-    
-    
+
+
 if __name__ == '__main__':
     # get command line argument for the file
     if len(sys.argv) != 2:

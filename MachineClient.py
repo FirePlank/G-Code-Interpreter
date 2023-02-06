@@ -9,8 +9,7 @@ class MachineClient:
         y (float): Y axis absolute value [mm]
         z (float): Z axis absolute value [mm]
         """
-        print("Moving to X={} Y={} Z={} [mm].".format(x, y,
-        z))
+        print("Moving to X={} Y={} Z={} [mm].".format(x, y, z))
 
     def move_x(self, value):
         """ Move spindle to given X coordinate. Keeps current Y and Z
@@ -50,7 +49,6 @@ class MachineClient:
         """
         print("Using spindle speed {} [mm/s].".format(value))
 
-
     def handle_gcode(self, gcode):
         """ Handles Gcode.
         Args:
@@ -59,7 +57,8 @@ class MachineClient:
 
         gcode = int(gcode)
 
-        # print a response depending on the gcode, in a real application this would be used to control the machine
+        # print a response depending on the gcode, in a real application this
+        # would be used to control the machine
         match gcode:
             case 0:
                 print("Using rapid positioning mode.")
@@ -101,7 +100,7 @@ class MachineClient:
                 print("Using units per minute feed rate mode.")
             case default:
                 print("Unknown gcode: {:d}.".format(gcode))
-            
+
     def handle_mcode(self, mcode):
         """ Handles Mcode.
         Args:
